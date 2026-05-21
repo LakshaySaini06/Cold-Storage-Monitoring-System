@@ -1,0 +1,14 @@
+{
+    "storage_type": "pharma",
+    "model_file": "pharma_model.pkl",
+    "safe_temp_min": 2.0,
+    "safe_temp_max": 8.0,
+    "safe_hum_min": 45.0,
+    "safe_hum_max": 65.0,
+    "alert_window": 5,
+    "alert_threshold": 3,
+    "features": [
+        "temperature",
+        "humidity"
+    ]
+}

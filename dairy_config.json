@@ -1,0 +1,14 @@
+{
+    "storage_type": "dairy",
+    "model_file": "dairy_model.pkl",
+    "safe_temp_min": 1.0,
+    "safe_temp_max": 4.0,
+    "safe_hum_min": 75.0,
+    "safe_hum_max": 90.0,
+    "alert_window": 5,
+    "alert_threshold": 3,
+    "features": [
+        "temperature",
+        "humidity"
+    ]
+}
