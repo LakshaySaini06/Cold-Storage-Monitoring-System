@@ -23,9 +23,8 @@ SAFE_HUM_MIN = 45.0
 SAFE_HUM_MAX = 65.0
 
 
-print(f"\n{'='*50}")
+
 print("  PHARMA MODEL TRAINING")
-print(f"{'='*50}")
 
 
 if not os.path.isfile(DATA_FILE):

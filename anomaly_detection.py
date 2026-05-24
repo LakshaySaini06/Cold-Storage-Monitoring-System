@@ -91,9 +91,8 @@ recent['ml_prediction'] = predictions
 recent['ml_confidence'] = probabilities.round(3)
  
 
-print("\n" + "─"*60)
 print(f"  RECENT READINGS — {storage_type.upper()} STORAGE")
-print("─"*60)
+
  
 has_time_col = 'time' in recent.columns or 'timestamp' in recent.columns
 time_col = 'timestamp' if 'timestamp' in recent.columns else ('time' if 'time' in recent.columns else None)
@@ -112,7 +111,7 @@ rule_violations = sum(1 for _, row in recent.iterrows() if rule_check(row))
  
 print("\n" + "─"*60)
 print(f"  SUMMARY")
-print("─"*60)
+
 print(f"  Readings analysed : {len(recent)}")
 print(f"  ML flagged        : {abnormal_count} / {len(recent)}")
 print(f"  Rule violations   : {rule_violations} / {len(recent)}")
@@ -137,4 +136,3 @@ else:
     print(f"     Avg temp: {avg_temp:.1f}°C | Avg humidity: {avg_hum:.1f}%")
  
 print(f"\n  Checked at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-print("─"*60 + "\n")
