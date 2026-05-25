@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ColdStore — Monitoring Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<style>
+:root {
+  --black:#121212; --surface:#181818; --elevated:#282828; --border:#2a2a2a;
+  --green:#1DB954; --red:#f44336; --amber:#FFC107; --blue:#2196F3; --orange:#FF5722;
+  --gray1:#b3b3b3; --gray2:#6b6b6b; --gray3:#3a3a3a;
+  --font-h:'Syne',sans-serif; --font-b:'Inter',sans-serif; --font-m:'DM Mono',monospace;
+  --r:10px; --rs:6px; --sw:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--black);color:#fff;font-family:var(--font-b);font-size:14px}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sw);min-width:var(--sw);background:#000;display:flex;flex-direction:column;padding:20px 12px;gap:2px;overflow-y:auto;border-right:1px solid #1a1a1a}
+.logo{display:flex;align-items:center;gap:10px;padding:4px 10px 20px}
+.logo-mark{width:34px;height:34px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center}
+.logo-text{font-family:var(--font-h);font-size:16px;font-weight:800;letter-spacing:-.5px}
+.nb{display:flex;align-items:center;gap:12px;width:100%;padding:9px 10px;border-radius:var(--rs);border:none;background:transparent;color:var(--gray1);font-family:var(--font-b);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;text-align:left}
+.nb:hover{color:#fff;background:#1a1a1a}
+.nb.active{color:#fff;background:var(--elevated)}
+.nb i{font-size:18px;flex-shrink:0}
+.nbadge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;min-width:20px;text-align:center}
+.ssec{font-size:10px;font-weight:700;color:var(--gray2);letter-spacing:1.2px;text-transform:uppercase;padding:16px 10px 6px}
+.ub{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:var(--rs);border:none;background:transparent;color:var(--gray1);font-family:var(--font-b);font-size:13px;cursor:pointer;transition:all .15s;text-align:left}
+.ub:hover{color:#fff}
+.ub.active{color:#fff;font-weight:600}
+.udot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sfoot{margin-top:auto;padding:12px 10px 0;border-top:1px solid #1a1a1a}
+.sinfo{font-size:11px;color:var(--gray2);line-height:1.8;font-family:var(--font-m)}
+.lpill{display:inline-flex;align-items:center;gap:5px;margin-top:6px}
+.ldot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;background:linear-gradient(180deg,#0d2b1a 0%,var(--black) 380px)}
+.main-inner{max-width:1400px;margin:0 auto;width:100%}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 28px 0;position:sticky;top:0;z-index:20;backdrop-filter:blur(4px);max-width:1400px;margin:0 auto;width:100%}
+.tnav{display:flex;gap:6px}
+.tnb{width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:var(--gray1);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:color .15s}
+.tnb:hover{color:#fff}
+.tr{display:flex;align-items:center;gap:10px}
+.tsw{display:flex;background:var(--elevated);border-radius:20px;padding:3px;gap:2px}
+.tsb{padding:5px 16px;border-radius:16px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--gray1);background:transparent;font-family:var(--font-b)}
+.tsb.active{background:var(--green);color:#000}
+.uchip{display:flex;align-items:center;gap:8px;background:var(--elevated);border-radius:20px;padding:3px 12px 3px 3px}
+.uav{width:28px;height:28px;border-radius:50%;background:#535353;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.rfbtn{display:flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid var(--border);border-radius:20px;color:var(--gray1);font-size:12px;cursor:pointer;transition:all .2s;font-family:var(--font-b)}
+.rfbtn:hover{color:#fff;border-color:var(--gray1)}
+.rfbtn.spinning i{animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* CONTENT */
+.content{padding:22px 28px 48px;max-width:1400px;margin:0 auto;width:100%}
+
+/* SECTIONS — only active shown */
+.section{display:none}
+.section.active{display:block}
+
+/* PAGE HEADER */
+.ph{margin-bottom:22px}
+.pt{font-family:var(--font-h);font-size:26px;font-weight:800;display:flex;align-items:center;gap:10px}
+.ps{font-size:12px;color:var(--gray2);margin-top:4px;font-family:var(--font-m)}
+.lc{font-size:11px;color:var(--gray2);margin-top:3px;font-family:var(--font-m)}
+
+/* BANNER */
+.banner{border-radius:var(--r);padding:18px 22px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;border:1px solid;transition:all .4s}
+.banner.normal{background:linear-gradient(135deg,#0d2b1a,#0f3320);border-color:var(--green)}
+.banner.abnormal{background:linear-gradient(135deg,#2d0d0d,#3a1010);border-color:var(--red)}
+.banner.loading{background:var(--surface);border-color:var(--border)}
+.bl{display:flex;align-items:center;gap:16px}
+.bicon{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.banner.normal .bicon{background:rgba(29,185,84,.18);color:var(--green)}
+.banner.abnormal .bicon{background:rgba(244,67,54,.18);color:var(--red)}
+.btitle{font-family:var(--font-h);font-size:17px;font-weight:800}
+.banner.normal .btitle{color:var(--green)}
+.banner.abnormal .btitle{color:var(--red)}
+.bdesc{font-size:12px;color:var(--gray1);margin-top:3px;max-width:500px;line-height:1.5}
+.bconf{text-align:right;flex-shrink:0}
+.clbl{font-size:10px;color:var(--gray2);text-transform:uppercase;letter-spacing:1px;font-family:var(--font-m)}
+.cval{font-family:var(--font-h);font-size:30px;font-weight:800;line-height:1.1}
+.banner.normal .cval{color:var(--green)}
+.banner.abnormal .cval{color:var(--red)}
+.cmodel{font-size:10px;color:var(--gray2);margin-top:2px;font-family:var(--font-m)}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}
+.mc{background:var(--surface);border-radius:var(--r);padding:18px 18px 14px;border:1px solid #222;transition:all .2s}
+.mc:hover{background:#1d1d1d;border-color:var(--border);transform:translateY(-2px)}
+.mct{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mcl{font-size:11px;color:var(--gray2);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.mci{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.mcv{font-family:var(--font-h);font-size:26px;font-weight:800;color:#fff;line-height:1}
+.mcu{font-size:13px;font-weight:400;color:var(--gray2);margin-left:3px}
+.mcf{font-size:11px;margin-top:6px;font-family:var(--font-m)}
+.ok{color:var(--green)!important}
+.warn{color:var(--amber)!important}
+.danger{color:var(--red)!important}
+.mb{height:3px;border-radius:2px;background:#2a2a2a;margin-top:10px;overflow:hidden}
+.mf{height:100%;border-radius:2px;transition:width .6s ease}
+
+/* CHARTS */
+.cr{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px;margin-bottom:22px}
+.card{background:var(--surface);border-radius:var(--r);padding:18px 20px;border:1px solid #222;min-width:0}
+.ct{font-family:var(--font-h);font-size:14px;font-weight:700;color:#fff;margin-bottom:2px}
+.cs{font-size:11px;color:var(--gray2);margin-bottom:14px;font-family:var(--font-m)}
+
+/* GAUGE */
+.gw{display:flex;flex-direction:column;gap:22px;margin-top:4px}
+.gh{display:flex;justify-content:space-between;font-size:12px;color:var(--gray1);margin-bottom:6px}
+.gcur{font-family:var(--font-m);font-weight:500}
+.gtrack{height:8px;border-radius:4px;background:#2a2a2a;position:relative;margin-bottom:4px}
+.gsafe{position:absolute;height:100%;background:rgba(29,185,84,.25);border-radius:4px;border:1px solid rgba(29,185,84,.4)}
+.gpin{position:absolute;width:3px;height:18px;top:-5px;border-radius:2px;background:#fff;transition:left .5s ease}
+.ghint{font-size:10px;color:var(--gray2);font-family:var(--font-m)}
+
+/* TABLE */
+.tc{background:var(--surface);border-radius:var(--r);padding:18px 20px;border:1px solid #222;margin-bottom:22px}
+.thdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.rt{width:100%;border-collapse:collapse}
+.rt th{font-size:10px;color:var(--gray2);font-weight:600;text-transform:uppercase;letter-spacing:.8px;padding:8px 8px 8px 0;border-bottom:1px solid #2a2a2a;text-align:left;font-family:var(--font-m)}
+.rt td{padding:11px 8px 11px 0;border-bottom:1px solid #1e1e1e;font-size:12px;color:var(--gray1);font-family:var(--font-m)}
+.rt tr:last-child td{border-bottom:none}
+.rt tbody tr:hover td{color:#fff}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;font-family:var(--font-m)}
+.pa{background:rgba(244,67,54,.15);color:var(--red)}
+.pn{background:rgba(29,185,84,.15);color:var(--green)}
+.pw{background:rgba(255,193,7,.15);color:var(--amber)}
+
+/* BOTTOM */
+.br{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.ai{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #1e1e1e}
+.ai:last-child{border-bottom:none}
+.adot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.amsg{font-size:12px;color:var(--gray1);line-height:1.45}
+.atime{font-size:10px;color:var(--gray2);margin-top:2px;font-family:var(--font-m)}
+
+/* ERROR */
+.ebanner{background:rgba(244,67,54,.1);border:1px solid var(--red);border-radius:var(--r);padding:14px 20px;margin-bottom:18px;display:none;align-items:center;gap:12px;font-size:13px;color:var(--red)}
+.ebanner.show{display:flex}
+
+/* ── ALERTS PAGE ── */
+.alerts-page-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:22px}
+.alert-full-item{background:var(--surface);border-radius:var(--r);padding:16px 20px;border:1px solid #222;display:flex;align-items:flex-start;gap:14px;transition:all .2s}
+.alert-full-item:hover{border-color:var(--border)}
+.alert-full-item.sev-danger{border-left:3px solid var(--red)}
+.alert-full-item.sev-warn{border-left:3px solid var(--amber)}
+.alert-full-item.sev-ok{border-left:3px solid var(--green)}
+.afi-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.afi-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:3px}
+.afi-desc{font-size:11px;color:var(--gray1);line-height:1.5}
+.afi-time{font-size:10px;color:var(--gray2);margin-top:4px;font-family:var(--font-m)}
+.afi-badge{margin-left:auto;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;height:fit-content;flex-shrink:0}
+
+/* ── ANALYTICS PAGE ── */
+.analytics-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:22px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1e1e1e;font-size:13px}
+.stat-row:last-child{border-bottom:none}
+.stat-label{color:var(--gray1)}
+.stat-val{font-family:var(--font-m);font-weight:500;color:#fff}
+
+/* ── MODELS PAGE ── */
+.model-card{background:var(--surface);border-radius:var(--r);padding:20px;border:1px solid #222;margin-bottom:14px}
+.model-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.model-name{font-family:var(--font-h);font-size:16px;font-weight:800}
+.mbadge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px}
+.mbadge.loaded{background:rgba(29,185,84,.15);color:var(--green)}
+.mbadge.missing{background:rgba(244,67,54,.15);color:var(--red)}
+.config-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1e1e1e;font-size:12px}
+.config-row:last-child{border-bottom:none}
+.config-key{color:var(--gray2);font-family:var(--font-m)}
+.config-val{color:#fff;font-family:var(--font-m);font-weight:500}
+
+/* ── DATA VERIFY ── */
+.verify-box{background:rgba(29,185,84,.06);border:1px solid rgba(29,185,84,.2);border-radius:var(--r);padding:16px 20px;margin-bottom:22px}
+.verify-title{font-family:var(--font-h);font-size:13px;font-weight:700;color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.verify-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.vitem{text-align:center}
+.vnum{font-family:var(--font-h);font-size:22px;font-weight:800;color:#fff}
+.vlbl{font-size:10px;color:var(--gray2);margin-top:2px;text-transform:uppercase;letter-spacing:.6px;font-family:var(--font-m)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:#0a0a0a}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+.nodata{text-align:center;padding:30px;color:var(--gray2);font-size:13px}
+.nodata i{font-size:32px;display:block;margin-bottom:8px}
+
+/* ── SIDEBAR fixed width, main fills rest ── */
+.sidebar{flex-shrink:0}
+.main{flex:1;min-width:0}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1200px){
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cr{grid-template-columns:1fr}
+  .br{grid-template-columns:1fr}
+  .analytics-grid{grid-template-columns:1fr}
+  .alerts-page-grid{grid-template-columns:1fr}
+}
+@media(max-width:900px){
+  :root{--sw:60px}
+  .logo-text,.nb span:not(.nbadge),.ssec,.ub span:not(.udot),.sinfo,.lpill span{display:none}
+  .nb,.ub{justify-content:center;padding:10px}
+  .nb i{margin:0}
+  .sidebar{padding:16px 8px}
+  .content{padding:16px}
+  .topbar{padding:12px 16px 0}
+  .verify-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:600px){
+  .metrics{grid-template-columns:1fr}
+  .topbar{flex-wrap:wrap;gap:8px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round">
+        <circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>
+      </svg>
+    </div>
+    <span class="logo-text">ColdStore</span>
+  </div>
+
+  <button class="nb active" onclick="showSection('dashboard',this)"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Dashboard</button>
+  <button class="nb" onclick="showSection('analytics',this)"><i class="ti ti-chart-line" aria-hidden="true"></i>Analytics</button>
+  <button class="nb" onclick="showSection('alerts',this)"><i class="ti ti-bell" aria-hidden="true"></i>Alerts<span class="nbadge" id="alert-count">0</span></button>
+  <button class="nb" onclick="showSection('models',this)"><i class="ti ti-brain" aria-hidden="true"></i>ML Models</button>
+
+  <div class="ssec">Storage Units</div>
+  <button class="ub active" id="unit-dairy" onclick="switchStorage('dairy')"><span class="udot" style="background:var(--green)"></span>Dairy Unit</button>
+  <button class="ub" id="unit-pharma" onclick="switchStorage('pharma')"><span class="udot" style="background:var(--blue)"></span>Pharma Unit</button>
+
+  <div class="sfoot">
+    <div class="sinfo">DHT22 · Pin 2<br>Logger: COM9 · 115200</div>
+    <div class="lpill"><span class="ldot"></span><span style="font-size:11px;color:var(--green);font-weight:600">LIVE POLLING</span></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="tnav">
+      <button class="tnb"><i class="ti ti-chevron-left" aria-hidden="true"></i></button>
+      <button class="tnb"><i class="ti ti-chevron-right" aria-hidden="true"></i></button>
+    </div>
+    <div class="tr">
+      <div class="tsw">
+        <button class="tsb active" id="sel-dairy" onclick="switchStorage('dairy')">Dairy</button>
+        <button class="tsb" id="sel-pharma" onclick="switchStorage('pharma')">Pharma</button>
+      </div>
+      <button class="rfbtn" id="rfbtn" onclick="fetchData()"><i class="ti ti-refresh" aria-hidden="true"></i>Refresh</button>
+      <div class="uchip"><div class="uav">MD</div><span style="font-size:13px;font-weight:600">Manisha</span></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="ebanner" id="ebanner"><i class="ti ti-wifi-off" aria-hidden="true"></i><span id="emsg">Cannot connect to Flask server.</span></div>
+
+    <!-- ══════════════════ DASHBOARD SECTION ══════════════════ -->
+    <div class="section active" id="sec-dashboard">
+      <div class="ph">
+        <div class="pt"><span class="ldot"></span><span id="page-title">Dairy Storage Monitor</span></div>
+        <div class="ps" id="page-sub">Loading…</div>
+        <div class="lc" id="last-check">–</div>
+      </div>
+
+      <!-- DATA VERIFICATION BOX -->
+      <div class="verify-box">
+        <div class="verify-title"><i class="ti ti-database-check" aria-hidden="true"></i>Data Verification — Your Real sensor_data.csv</div>
+        <div class="verify-grid">
+          <div class="vitem"><div class="vnum" id="v-total">–</div><div class="vlbl">Total Readings</div></div>
+          <div class="vitem"><div class="vnum ok" id="v-normal">–</div><div class="vlbl">Normal (ML)</div></div>
+          <div class="vitem"><div class="vnum danger" id="v-abnormal">–</div><div class="vlbl">Abnormal (ML)</div></div>
+        </div>
+      </div>
+
+      <div class="banner loading" id="status-banner">
+        <div class="bl"><div class="bicon"><i class="ti ti-loader" aria-hidden="true"></i></div>
+          <div><div class="btitle" id="btitle">Loading…</div><div class="bdesc" id="bdesc">Fetching sensor data</div></div>
+        </div>
+        <div class="bconf"><div class="clbl">ML Confidence</div><div class="cval" id="cval">–</div><div class="cmodel" id="cmodel">–</div></div>
+      </div>
+
+      <div class="metrics">
+        <div class="mc">
+          <div class="mct"><span class="mcl">Temperature</span><div class="mci" style="background:rgba(255,87,34,.12);color:var(--orange)"><i class="ti ti-temperature" aria-hidden="true"></i></div></div>
+          <div><span class="mcv" id="m-temp">–</span><span class="mcu">°C</span></div>
+          <div class="mcf" id="m-temp-s" style="color:var(--gray2)">–</div>
+          <div class="mb"><div class="mf" id="m-temp-b" style="width:0%;background:var(--orange)"></div></div>
+        </div>
+        <div class="mc">
+          <div class="mct"><span class="mcl">Humidity</span><div class="mci" style="background:rgba(33,150,243,.12);color:var(--blue)"><i class="ti ti-droplet" aria-hidden="true"></i></div></div>
+          <div><span class="mcv" id="m-hum">–</span><span class="mcu">%</span></div>
+          <div class="mcf" id="m-hum-s" style="color:var(--gray2)">–</div>
+          <div class="mb"><div class="mf" id="m-hum-b" style="width:0%;background:var(--blue)"></div></div>
+        </div>
+        <div class="mc">
+          <div class="mct"><span class="mcl">ML Status</span><div class="mci" style="background:rgba(29,185,84,.12);color:var(--green)"><i class="ti ti-brain" aria-hidden="true"></i></div></div>
+          <div class="mcv" id="m-ml" style="font-size:18px;margin-top:4px">–</div>
+          <div class="mcf" id="m-ml-s" style="color:var(--gray2)">RandomForest · 200 trees</div>
+          <div class="mb"><div class="mf" id="m-ml-b" style="width:0%"></div></div>
+        </div>
+        <div class="mc">
+          <div class="mct"><span class="mcl">Rule Violations</span><div class="mci" style="background:rgba(255,193,7,.12);color:var(--amber)"><i class="ti ti-alert-circle" aria-hidden="true"></i></div></div>
+          <div><span class="mcv" id="m-viols">–</span></div>
+          <div class="mcf" id="m-viols-s" style="color:var(--gray2)">–</div>
+          <div class="mb"><div class="mf" id="m-viols-b" style="width:0%;background:var(--amber)"></div></div>
+        </div>
+      </div>
+
+      <div class="cr">
+        <div class="card">
+          <div class="ct">Live Sensor Readings</div>
+          <div class="cs">Last 20 readings from your sensor_data.csv</div>
+          <div style="display:flex;gap:16px;margin-bottom:10px">
+            <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray2)"><span style="width:22px;height:2px;background:var(--orange);display:inline-block"></span>Temperature °C</span>
+            <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray2)"><span style="width:22px;height:2px;background:var(--blue);display:inline-block"></span>Humidity %</span>
+          </div>
+          <div style="position:relative;height:190px"><canvas id="lineChart" role="img" aria-label="Sensor readings chart">Chart</canvas></div>
+        </div>
+        <div class="card">
+          <div class="ct">Safe Range Gauge</div>
+          <div class="cs">White pin = current reading</div>
+          <div class="gw">
+            <div>
+              <div class="gh"><span>Temperature</span><span class="gcur" id="g-tc">–</span></div>
+              <div class="gtrack"><div class="gsafe" id="g-ts"></div><div class="gpin" id="g-tp"></div></div>
+              <div class="ghint" id="g-th">–</div>
+            </div>
+            <div>
+              <div class="gh"><span>Humidity</span><span class="gcur" id="g-hc">–</span></div>
+              <div class="gtrack"><div class="gsafe" id="g-hs"></div><div class="gpin" id="g-hp"></div></div>
+              <div class="ghint" id="g-hh">–</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tc">
+        <div class="thdr">
+          <div><div class="ct">Recent Readings</div><div class="cs" style="margin-bottom:0">Live from your sensor_data.csv · ML predictions from your .pkl models</div></div>
+          <span id="total-badge" style="font-family:var(--font-m);font-size:11px;color:var(--gray2)">–</span>
+        </div>
+        <table class="rt"><thead><tr><th>Time</th><th>Temp (°C)</th><th>Humidity (%)</th><th>ML Result</th><th>Rule Check</th><th>Confidence</th></tr></thead>
+        <tbody id="tbl-body"><tr><td colspan="6"><div class="nodata"><i class="ti ti-loader"></i>Loading…</div></td></tr></tbody></table>
+      </div>
+
+      <div class="br">
+        <div class="card">
+          <div class="ct">Anomaly Distribution</div>
+          <div class="cs">All readings — your RandomForest model output</div>
+          <div style="display:flex;gap:16px;margin-bottom:8px">
+            <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray2)"><span style="width:10px;height:10px;border-radius:2px;background:var(--red);display:inline-block"></span>Abnormal</span>
+            <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray2)"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block"></span>Normal</span>
+          </div>
+          <div style="position:relative;height:150px"><canvas id="donutChart" role="img" aria-label="Anomaly distribution">Chart</canvas></div>
+        </div>
+        <div class="card">
+          <div class="ct">Active Alerts</div>
+          <div class="cs">Rule violations from latest window</div>
+          <div id="alerts-mini"><div class="nodata"><i class="ti ti-loader"></i>Loading…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ ALERTS SECTION ══════════════════ -->
+    <div class="section" id="sec-alerts">
+      <div class="ph">
+        <div class="pt"><i class="ti ti-bell" style="color:var(--red)" aria-hidden="true"></i>Alerts & Violations</div>
+        <div class="ps" id="al-sub">All rule-based and ML anomaly alerts</div>
+        <div class="lc" id="al-check">–</div>
+      </div>
+
+      <!-- summary strip -->
+      <div class="metrics" style="grid-template-columns:repeat(3,1fr);margin-bottom:22px">
+        <div class="mc">
+          <div class="mct"><span class="mcl">Total Alerts</span><div class="mci" style="background:rgba(244,67,54,.12);color:var(--red)"><i class="ti ti-alert-triangle" aria-hidden="true"></i></div></div>
+          <div><span class="mcv danger" id="al-total">–</span></div>
+          <div class="mcf" style="color:var(--gray2)">In current window</div>
+        </div>
+        <div class="mc">
+          <div class="mct"><span class="mcl">ML Flagged</span><div class="mci" style="background:rgba(255,193,7,.12);color:var(--amber)"><i class="ti ti-brain" aria-hidden="true"></i></div></div>
+          <div><span class="mcv warn" id="al-ml">–</span></div>
+          <div class="mcf" style="color:var(--gray2)">Abnormal predictions</div>
+        </div>
+        <div class="mc">
+          <div class="mct"><span class="mcl">Rule Violations</span><div class="mci" style="background:rgba(244,67,54,.12);color:var(--red)"><i class="ti ti-shield-off" aria-hidden="true"></i></div></div>
+          <div><span class="mcv danger" id="al-rule">–</span></div>
+          <div class="mcf" style="color:var(--gray2)">Safe range breaches</div>
+        </div>
+      </div>
+
+      <div id="alerts-full-list"><div class="nodata"><i class="ti ti-loader"></i>Loading alerts…</div></div>
+    </div>
+
+    <!-- ══════════════════ ANALYTICS SECTION ══════════════════ -->
+    <div class="section" id="sec-analytics">
+      <div class="ph">
+        <div class="pt"><i class="ti ti-chart-line" style="color:var(--blue)" aria-hidden="true"></i>Analytics</div>
+        <div class="ps">Statistical breakdown of all sensor readings</div>
+      </div>
+      <div class="analytics-grid">
+        <div class="card">
+          <div class="ct">Temperature Stats</div>
+          <div class="cs" id="an-ts">–</div>
+          <div id="an-temp-rows"><div class="nodata"><i class="ti ti-loader"></i></div></div>
+        </div>
+        <div class="card">
+          <div class="ct">Humidity Stats</div>
+          <div class="cs" id="an-hs">–</div>
+          <div id="an-hum-rows"><div class="nodata"><i class="ti ti-loader"></i></div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="ct">Temperature Over All Readings</div>
+        <div class="cs">Full history from sensor_data.csv</div>
+        <div style="position:relative;height:220px"><canvas id="an-chart" role="img" aria-label="Full temperature history">Chart</canvas></div>
+      </div>
+      <div class="card">
+        <div class="ct">ML Prediction Breakdown</div>
+        <div class="cs" id="an-ml-sub">–</div>
+        <div id="an-ml-rows"><div class="nodata"><i class="ti ti-loader"></i></div></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ MODELS SECTION ══════════════════ -->
+    <div class="section" id="sec-models">
+      <div class="ph">
+        <div class="pt"><i class="ti ti-brain" style="color:var(--green)" aria-hidden="true"></i>ML Models</div>
+        <div class="ps">RandomForest models trained on your datasets</div>
+      </div>
+      <div id="models-content"><div class="nodata"><i class="ti ti-loader"></i>Loading model info…</div></div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let currentType = 'dairy';
+let currentCfg  = null;
+let lastData    = null;
+let lineChart   = null, donutChart = null, anChart = null;
+let autoTimer   = null;
+
+// ── Fetch ──────────────────────────────────────────────────────────────────────
+async function fetchData() {
+  const btn = document.getElementById('rfbtn');
+  btn.classList.add('spinning');
+  try {
+    const [cfgRes, dataRes, statusRes] = await Promise.all([
+      fetch(`/api/config/${currentType}`),
+      fetch(`/api/readings?type=${currentType}&n=100`),
+      fetch(`/api/status`)
+    ]);
+    if (!cfgRes.ok || !dataRes.ok) throw new Error('Server error');
+    const cfg    = await cfgRes.json();
+    const data   = await dataRes.json();
+    const status = await statusRes.json();
+    document.getElementById('ebanner').classList.remove('show');
+    currentCfg = cfg;
+    lastData   = data;
+    renderAll(cfg, data, status);
+  } catch(e) {
+    document.getElementById('ebanner').classList.add('show');
+    document.getElementById('emsg').textContent = 'Cannot connect to Flask server. Make sure server.py is running on port 5000.';
+  } finally {
+    btn.classList.remove('spinning');
+  }
+}
+
+// ── Render all sections ────────────────────────────────────────────────────────
+function renderAll(cfg, data, status) {
+  if (data.error) return;
+  const rows = data.rows || [], latest = data.latest || {}, summary = data.summary || {};
+
+  renderDashboard(cfg, rows, latest, summary);
+  renderAlerts(cfg, rows, latest, summary);
+  renderAnalytics(cfg, rows, summary);
+  renderModels(status, cfg);
+
+  document.getElementById('alert-count').textContent = summary.rule_violations || 0;
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard(cfg, rows, latest, summary) {
+  document.getElementById('page-title').textContent = cfg.storage_type === 'dairy' ? 'Dairy Storage Monitor' : 'Pharma Storage Monitor';
+  document.getElementById('page-sub').textContent   = `Safe: ${cfg.safe_temp_min}–${cfg.safe_temp_max}°C · ${cfg.safe_hum_min}–${cfg.safe_hum_max}% RH · Alert window: ${cfg.alert_window} readings`;
+  document.getElementById('last-check').textContent = `Last checked: ${summary.checked_at || '–'}`;
+  document.getElementById('total-badge').textContent= `${summary.total} total readings loaded`;
+
+  // Verify box
+  document.getElementById('v-total').textContent    = summary.total || 0;
+  document.getElementById('v-normal').textContent   = summary.normal || 0;
+  document.getElementById('v-abnormal').textContent = summary.abnormal || 0;
+
+  renderBanner(cfg, latest, summary);
+  renderMetrics(cfg, latest);
+  renderGauges(cfg, latest);
+  renderTable(cfg, rows);
+  renderCharts(cfg, rows, summary);
+  renderAlertsMini(cfg, latest, summary);
+}
+
+function renderBanner(cfg, latest, summary) {
+  const abn = latest.ml_prediction === 1;
+  const el  = document.getElementById('status-banner');
+  el.className = 'banner ' + (abn ? 'abnormal' : 'normal');
+  el.querySelector('.bicon').innerHTML = `<i class="ti ${abn?'ti-alert-triangle':'ti-circle-check'}" aria-hidden="true"></i>`;
+  document.getElementById('btitle').textContent = abn ? '⚠  Abnormal Condition Detected' : '✓  All Readings Normal';
+  const viols = latest.violations || [];
+  document.getElementById('bdesc').textContent  = viols.length ? viols.join(' · ') : `Avg temp ${(latest.temperature||0).toFixed(1)}°C · Avg humidity ${(latest.humidity||0).toFixed(1)}% — within safe range`;
+  document.getElementById('cval').textContent   = latest.ml_confidence != null ? latest.ml_confidence.toFixed(1)+'%' : '–';
+  document.getElementById('cmodel').textContent = `RandomForest · ${cfg.model_file}`;
+}
+
+function renderMetrics(cfg, latest) {
+  const t = latest.temperature, h = latest.humidity;
+  const tOk = t >= cfg.safe_temp_min && t <= cfg.safe_temp_max;
+  const hOk = h >= cfg.safe_hum_min  && h <= cfg.safe_hum_max;
+  const abn = latest.ml_prediction === 1;
+  const viols = latest.violations || [];
+
+  set('m-temp', t != null ? t.toFixed(1) : '–');
+  setFoot('m-temp-s', tOk ? '✓ Within safe range' : t > cfg.safe_temp_max ? `↑ ${(t-cfg.safe_temp_max).toFixed(1)}° above max` : `↓ ${(cfg.safe_temp_min-t).toFixed(1)}° below min`, tOk ? 'ok' : 'danger');
+  bar('m-temp-b', Math.min(100,(t/50)*100), tOk?'var(--green)':'var(--red)');
+
+  set('m-hum', h != null ? h.toFixed(1) : '–');
+  setFoot('m-hum-s', hOk ? '✓ Within safe range' : h > cfg.safe_hum_max ? `↑ ${(h-cfg.safe_hum_max).toFixed(1)}% above max` : `↓ ${(cfg.safe_hum_min-h).toFixed(1)}% below min`, hOk ? 'ok' : 'danger');
+  bar('m-hum-b', h, hOk?'var(--green)':'var(--blue)');
+
+  const mlEl = document.getElementById('m-ml');
+  mlEl.textContent = latest.ml_label || '–';
+  mlEl.className = 'mcv ' + (abn?'danger':'ok');
+  mlEl.style.fontSize = '18px';
+  bar('m-ml-b', latest.ml_confidence||0, abn?'var(--red)':'var(--green)');
+
+  const vc = viols.length;
+  const vEl = document.getElementById('m-viols');
+  vEl.textContent = vc; vEl.className = 'mcv '+(vc?'danger':'ok');
+  setFoot('m-viols-s', vc ? viols.slice(0,2).join(', ') : 'No violations', vc?'danger':'ok');
+  bar('m-viols-b', Math.min(100,vc*50), 'var(--amber)');
+}
+
+function renderGauges(cfg, latest) {
+  const t=latest.temperature||0, h=latest.humidity||0;
+  const TMIN=0,TMAX=50,HMIN=0,HMAX=100;
+  const tS=((cfg.safe_temp_min-TMIN)/(TMAX-TMIN))*100, tW=((cfg.safe_temp_max-cfg.safe_temp_min)/(TMAX-TMIN))*100;
+  const tP=Math.min(97,Math.max(1,((t-TMIN)/(TMAX-TMIN))*100));
+  const hS=((cfg.safe_hum_min-HMIN)/(HMAX-HMIN))*100, hW=((cfg.safe_hum_max-cfg.safe_hum_min)/(HMAX-HMIN))*100;
+  const hP=Math.min(97,Math.max(1,((h-HMIN)/(HMAX-HMIN))*100));
+  const tOk=t>=cfg.safe_temp_min&&t<=cfg.safe_temp_max;
+  const hOk=h>=cfg.safe_hum_min&&h<=cfg.safe_hum_max;
+
+  document.getElementById('g-ts').style.cssText=`left:${tS}%;width:${tW}%`;
+  document.getElementById('g-tp').style.cssText=`left:calc(${tP}% - 1.5px);background:${tOk?'var(--green)':'var(--red)'}`;
+  document.getElementById('g-tc').textContent=t.toFixed(1)+'°C';
+  document.getElementById('g-tc').style.color=tOk?'var(--green)':'var(--red)';
+  document.getElementById('g-th').textContent=`Safe: ${cfg.safe_temp_min}–${cfg.safe_temp_max}°C`;
+
+  document.getElementById('g-hs').style.cssText=`left:${hS}%;width:${hW}%`;
+  document.getElementById('g-hp').style.cssText=`left:calc(${hP}% - 1.5px);background:${hOk?'var(--green)':'var(--red)'}`;
+  document.getElementById('g-hc').textContent=h.toFixed(1)+'%';
+  document.getElementById('g-hc').style.color=hOk?'var(--green)':'var(--red)';
+  document.getElementById('g-hh').textContent=`Safe: ${cfg.safe_hum_min}–${cfg.safe_hum_max}% RH`;
+}
+
+function renderTable(cfg, rows) {
+  const tbody = document.getElementById('tbl-body');
+  if (!rows.length) { tbody.innerHTML='<tr><td colspan="6"><div class="nodata"><i class="ti ti-file-off"></i>No data</div></td></tr>'; return; }
+  tbody.innerHTML = [...rows].reverse().slice(0,15).map(r => {
+    const tOk=r.temperature>=cfg.safe_temp_min&&r.temperature<=cfg.safe_temp_max;
+    const hOk=r.humidity>=cfg.safe_hum_min&&r.humidity<=cfg.safe_hum_max;
+    const abn=r.ml_prediction===1;
+    const viols=r.violations||[];
+    const rule=viols.length?`<span style="color:var(--red);font-size:10px">${viols[0]}${viols.length>1?' +'+(viols.length-1)+' more':''}</span>`:`<span style="color:var(--green)">✓ OK</span>`;
+    return `<tr>
+      <td>${String(r.time)}</td>
+      <td style="color:${tOk?'var(--green)':'var(--red)'};font-weight:600">${r.temperature.toFixed(1)}</td>
+      <td style="color:${hOk?'var(--green)':'var(--red)'};font-weight:600">${r.humidity.toFixed(1)}</td>
+      <td><span class="pill ${abn?'pa':'pn'}">${r.ml_label||'–'}</span></td>
+      <td>${rule}</td>
+      <td>${r.ml_confidence!=null?r.ml_confidence.toFixed(1)+'%':'–'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderCharts(cfg, rows, summary) {
+  const last20=rows.slice(-20);
+  const labels=last20.map(r=>String(r.time));
+  const temps=last20.map(r=>r.temperature);
+  const hums=last20.map(r=>r.humidity);
+  if(lineChart)lineChart.destroy();
+  lineChart=new Chart(document.getElementById('lineChart'),{
+    type:'line', data:{labels,datasets:[
+      {label:'Temp°C',data:temps,borderColor:'#FF5722',backgroundColor:'rgba(255,87,34,.06)',tension:.3,pointRadius:2,borderWidth:2,yAxisID:'y'},
+      {label:'Humidity%',data:hums,borderColor:'#2196F3',backgroundColor:'rgba(33,150,243,.06)',tension:.3,pointRadius:2,borderWidth:2,yAxisID:'y1',borderDash:[4,3]}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#555',font:{size:10},maxTicksLimit:6},grid:{color:'#1e1e1e'}},
+        y:{ticks:{color:'#FF5722',font:{size:10}},grid:{color:'#1e1e1e'},title:{display:true,text:'°C',color:'#FF5722',font:{size:10}}},
+        y1:{position:'right',ticks:{color:'#2196F3',font:{size:10}},grid:{drawOnChartArea:false},title:{display:true,text:'%',color:'#2196F3',font:{size:10}}}}}
+  });
+  if(donutChart)donutChart.destroy();
+  donutChart=new Chart(document.getElementById('donutChart'),{
+    type:'doughnut', data:{labels:['Abnormal','Normal'],datasets:[{data:[summary.abnormal||0,summary.normal||0],backgroundColor:['#f44336','#1DB954'],borderColor:'#181818',borderWidth:3,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} readings`}}},cutout:'62%'}
+  });
+}
+
+function renderAlertsMini(cfg, latest, summary) {
+  const el=document.getElementById('alerts-mini');
+  const viols=latest.violations||[], items=[];
+  viols.forEach(v=>items.push({msg:v,sev:'danger',time:'Latest reading'}));
+  if(summary.recent_abnormal>=cfg.alert_threshold) items.push({msg:`ML flagged ${summary.recent_abnormal}/${summary.alert_window} readings ABNORMAL`,sev:'warn',time:`Window of ${summary.alert_window}`});
+  if(!items.length) items.push({msg:'All readings within safe range — no alerts',sev:'ok',time:summary.checked_at||''});
+  const c={danger:'var(--red)',warn:'var(--amber)',ok:'var(--green)'};
+  el.innerHTML=items.map(a=>`<div class="ai"><div class="adot" style="background:${c[a.sev]}"></div><div><div class="amsg">${a.msg}</div><div class="atime">${a.time}</div></div></div>`).join('');
+}
+
+// ── ALERTS PAGE ───────────────────────────────────────────────────────────────
+function renderAlerts(cfg, rows, latest, summary) {
+  document.getElementById('al-sub').textContent   = `Storage: ${cfg.storage_type.toUpperCase()} · Safe: ${cfg.safe_temp_min}–${cfg.safe_temp_max}°C · ${cfg.safe_hum_min}–${cfg.safe_hum_max}% RH`;
+  document.getElementById('al-check').textContent = `Last checked: ${summary.checked_at||'–'}`;
+
+  // Count cards
+  const totalAlerts = (latest.violations||[]).length + (summary.recent_abnormal>=cfg.alert_threshold?1:0);
+  document.getElementById('al-total').textContent = totalAlerts || 0;
+  document.getElementById('al-ml').textContent    = `${summary.recent_abnormal||0} / ${summary.alert_window}`;
+  document.getElementById('al-rule').textContent  = summary.rule_violations || 0;
+
+  // Build full alert cards
+  const container = document.getElementById('alerts-full-list');
+  const cards = [];
+
+  // Per-reading violations from entire dataset
+  const violRows = rows.filter(r=>(r.violations||[]).length>0);
+  if(violRows.length===0 && summary.recent_abnormal < cfg.alert_threshold) {
+    container.innerHTML=`<div class="alert-full-item sev-ok">
+      <div class="afi-icon" style="background:rgba(29,185,84,.15);color:var(--green)"><i class="ti ti-circle-check" aria-hidden="true"></i></div>
+      <div><div class="afi-title">✓ No Active Alerts</div>
+      <div class="afi-desc">All ${summary.total} readings are within safe range. ML model shows no anomalies in the alert window.</div>
+      <div class="afi-time">${summary.checked_at||''}</div></div>
+      <span class="afi-badge mbadge loaded">NORMAL</span>
+    </div>`;
+    return;
+  }
+
+  // ML system alert
+  if(summary.recent_abnormal >= cfg.alert_threshold) {
+    cards.push(`<div class="alert-full-item sev-warn">
+      <div class="afi-icon" style="background:rgba(255,193,7,.15);color:var(--amber)"><i class="ti ti-brain" aria-hidden="true"></i></div>
+      <div><div class="afi-title">ML Model — Abnormal Pattern Detected</div>
+      <div class="afi-desc">Your RandomForest model (${cfg.model_file}) flagged <strong>${summary.recent_abnormal} out of ${summary.alert_window}</strong> recent readings as ABNORMAL. Alert threshold is ${cfg.alert_threshold}.</div>
+      <div class="afi-time">Alert window · ${summary.checked_at||''}</div></div>
+      <span class="afi-badge mbadge missing">⚠ ML ALERT</span>
+    </div>`);
+  }
+
+  // Temperature rule violations
+  const tempViols = rows.filter(r=>(r.violations||[]).some(v=>v.includes('Temp')));
+  if(tempViols.length) {
+    const last=tempViols[tempViols.length-1];
+    cards.push(`<div class="alert-full-item sev-danger">
+      <div class="afi-icon" style="background:rgba(255,87,34,.15);color:var(--orange)"><i class="ti ti-temperature" aria-hidden="true"></i></div>
+      <div><div class="afi-title">Temperature Out of Safe Range</div>
+      <div class="afi-desc">Safe range: <strong>${cfg.safe_temp_min}–${cfg.safe_temp_max}°C</strong>. 
+      Current reading: <strong>${last.temperature.toFixed(1)}°C</strong>. 
+      Found in <strong>${tempViols.length}</strong> reading(s). 
+      Violation: ${(last.violations||[]).filter(v=>v.includes('Temp')).join(', ')}.</div>
+      <div class="afi-time">Latest: time=${last.time}</div></div>
+      <span class="afi-badge mbadge missing">DANGER</span>
+    </div>`);
+  }
+
+  // Humidity rule violations
+  const humViols = rows.filter(r=>(r.violations||[]).some(v=>v.includes('Humidity')));
+  if(humViols.length) {
+    const last=humViols[humViols.length-1];
+    cards.push(`<div class="alert-full-item sev-danger">
+      <div class="afi-icon" style="background:rgba(33,150,243,.15);color:var(--blue)"><i class="ti ti-droplet" aria-hidden="true"></i></div>
+      <div><div class="afi-title">Humidity Out of Safe Range</div>
+      <div class="afi-desc">Safe range: <strong>${cfg.safe_hum_min}–${cfg.safe_hum_max}% RH</strong>. 
+      Current reading: <strong>${last.humidity.toFixed(1)}%</strong>. 
+      Found in <strong>${humViols.length}</strong> reading(s). 
+      Violation: ${(last.violations||[]).filter(v=>v.includes('Humidity')).join(', ')}.</div>
+      <div class="afi-time">Latest: time=${last.time}</div></div>
+      <span class="afi-badge mbadge missing">DANGER</span>
+    </div>`);
+  }
+
+  // Action card
+  if(cards.length) {
+    cards.push(`<div class="alert-full-item sev-warn">
+      <div class="afi-icon" style="background:rgba(255,193,7,.15);color:var(--amber)"><i class="ti ti-urgent" aria-hidden="true"></i></div>
+      <div><div class="afi-title">Recommended Action</div>
+      <div class="afi-desc">Check the <strong>${cfg.storage_type.toUpperCase()}</strong> storage unit immediately. 
+      Verify cooling system is functioning. Safe operating range: <strong>${cfg.safe_temp_min}–${cfg.safe_temp_max}°C</strong> and <strong>${cfg.safe_hum_min}–${cfg.safe_hum_max}% RH</strong>.</div>
+      <div class="afi-time">${summary.checked_at||''}</div></div>
+      <span class="afi-badge mbadge missing">ACTION NEEDED</span>
+    </div>`);
+  }
+
+  container.innerHTML = `<div class="alerts-page-grid">${cards.join('')}</div>`;
+}
+
+// ── ANALYTICS PAGE ────────────────────────────────────────────────────────────
+function renderAnalytics(cfg, rows, summary) {
+  if(!rows.length) return;
+  const temps = rows.map(r=>r.temperature);
+  const hums  = rows.map(r=>r.humidity);
+
+  const tMin=Math.min(...temps).toFixed(1), tMax=Math.max(...temps).toFixed(1);
+  const tAvg=(temps.reduce((a,b)=>a+b,0)/temps.length).toFixed(1);
+  const hMin=Math.min(...hums).toFixed(1),  hMax=Math.max(...hums).toFixed(1);
+  const hAvg=(hums.reduce((a,b)=>a+b,0)/hums.length).toFixed(1);
+  const tInRange=rows.filter(r=>r.temperature>=cfg.safe_temp_min&&r.temperature<=cfg.safe_temp_max).length;
+  const hInRange=rows.filter(r=>r.humidity>=cfg.safe_hum_min&&r.humidity<=cfg.safe_hum_max).length;
+
+  document.getElementById('an-ts').textContent=`Based on ${rows.length} readings from sensor_data.csv`;
+  document.getElementById('an-hs').textContent=`Based on ${rows.length} readings from sensor_data.csv`;
+
+  const tr=v=>`<div class="stat-row"><span class="stat-label">${v[0]}</span><span class="stat-val">${v[1]}</span></div>`;
+  document.getElementById('an-temp-rows').innerHTML=[
+    ['Minimum',tMin+'°C'],['Maximum',tMax+'°C'],['Average',tAvg+'°C'],
+    ['Safe range',`${cfg.safe_temp_min}–${cfg.safe_temp_max}°C`],
+    ['Within range',`${tInRange}/${rows.length} (${Math.round(tInRange/rows.length*100)}%)`],
+    ['Out of range',`${rows.length-tInRange}/${rows.length}`]
+  ].map(tr).join('');
+  document.getElementById('an-hum-rows').innerHTML=[
+    ['Minimum',hMin+'%'],['Maximum',hMax+'%'],['Average',hAvg+'%'],
+    ['Safe range',`${cfg.safe_hum_min}–${cfg.safe_hum_max}% RH`],
+    ['Within range',`${hInRange}/${rows.length} (${Math.round(hInRange/rows.length*100)}%)`],
+    ['Out of range',`${rows.length-hInRange}/${rows.length}`]
+  ].map(tr).join('');
+
+  document.getElementById('an-ml-sub').textContent=`${cfg.model_file} · RandomForest 200 trees`;
+  document.getElementById('an-ml-rows').innerHTML=[
+    ['Total readings analysed', rows.length],
+    ['Predicted NORMAL',`${summary.normal} (${Math.round((summary.normal||0)/rows.length*100)}%)`],
+    ['Predicted ABNORMAL',`${summary.abnormal} (${Math.round((summary.abnormal||0)/rows.length*100)}%)`],
+    ['Alert window size', cfg.alert_window],
+    ['Alert threshold', cfg.alert_threshold],
+    ['System status', summary.system_alert ? '⚠ ALERT ACTIVE' : '✓ Normal']
+  ].map(tr).join('');
+
+  // Full temp chart
+  if(anChart) anChart.destroy();
+  anChart=new Chart(document.getElementById('an-chart'),{
+    type:'line', data:{labels:rows.map(r=>String(r.time)),datasets:[
+      {label:'Temp°C',data:temps,borderColor:'#FF5722',backgroundColor:'rgba(255,87,34,.08)',tension:.2,pointRadius:1,borderWidth:1.5},
+      {label:'Safe max',data:rows.map(()=>cfg.safe_temp_max),borderColor:'rgba(29,185,84,.5)',borderDash:[6,3],pointRadius:0,borderWidth:1},
+      {label:'Safe min',data:rows.map(()=>cfg.safe_temp_min),borderColor:'rgba(29,185,84,.5)',borderDash:[6,3],pointRadius:0,borderWidth:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#555',font:{size:9},maxTicksLimit:8},grid:{color:'#1e1e1e'}},
+        y:{ticks:{color:'#999',font:{size:10}},grid:{color:'#1e1e1e'},title:{display:true,text:'°C',color:'#999',font:{size:10}}}}}
+  });
+}
+
+// ── MODELS PAGE ───────────────────────────────────────────────────────────────
+function renderModels(status, activeCfg) {
+  const el = document.getElementById('models-content');
+  const types = ['dairy','pharma'];
+  el.innerHTML = types.map(t => {
+    const s   = status[t] || {};
+    const cfg = s.config || {};
+    const loaded = s.model_loaded;
+    return `<div class="model-card">
+      <div class="model-header">
+        <div>
+          <div class="model-name" style="color:${t==='dairy'?'var(--green)':'var(--blue)'}">${t.toUpperCase()} Storage Model</div>
+          <div style="font-size:11px;color:var(--gray2);font-family:var(--font-m);margin-top:2px">${cfg.model_file||t+'_model.pkl'}</div>
+        </div>
+        <span class="mbadge ${loaded?'loaded':'missing'}">${loaded?'✓ Loaded':'✗ Not Found'}</span>
+      </div>
+      ${loaded ? `
+      <div class="config-row"><span class="config-key">Algorithm</span><span class="config-val">RandomForestClassifier</span></div>
+      <div class="config-row"><span class="config-key">Estimators</span><span class="config-val">200 trees · max_depth=10</span></div>
+      <div class="config-row"><span class="config-key">Safe Temp</span><span class="config-val">${cfg.safe_temp_min}°C – ${cfg.safe_temp_max}°C</span></div>
+      <div class="config-row"><span class="config-key">Safe Humidity</span><span class="config-val">${cfg.safe_hum_min}% – ${cfg.safe_hum_max}% RH</span></div>
+      <div class="config-row"><span class="config-key">Alert Window</span><span class="config-val">Last ${cfg.alert_window} readings</span></div>
+      <div class="config-row"><span class="config-key">Alert Threshold</span><span class="config-val">${cfg.alert_threshold} abnormal readings triggers alert</span></div>
+      <div class="config-row"><span class="config-key">Features</span><span class="config-val">${(cfg.features||['temperature','humidity']).join(', ')}</span></div>
+      ` : `<div style="color:var(--red);font-size:12px;padding:8px 0">Run python train_${t}_model.py to generate this model</div>`}
+    </div>`;
+  }).join('');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function set(id,val){ document.getElementById(id).textContent=val; }
+function setFoot(id,txt,cls){ const e=document.getElementById(id); e.textContent=txt; e.className='mcf '+(cls||''); }
+function bar(id,pct,color){ const e=document.getElementById(id); e.style.width=Math.min(100,Math.max(0,pct))+'%'; e.style.background=color; }
+
+function switchStorage(type) {
+  currentType=type;
+  ['dairy','pharma'].forEach(t=>{
+    document.getElementById('sel-'+t).className='tsb'+(t===type?' active':'');
+    document.getElementById('unit-'+t).className='ub'+(t===type?' active':'');
+  });
+  fetchData();
+}
+
+function showSection(sec, btn) {
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+sec).classList.add('active');
+  // Re-render analytics chart when switching to it (canvas sizing fix)
+  if(sec==='analytics' && lastData && currentCfg) {
+    setTimeout(()=>renderAnalytics(currentCfg, lastData.rows||[], lastData.summary||{}),50);
+  }
+}
+
+// ── Auto refresh every 5s ─────────────────────────────────────────────────────
+fetchData();
+clearInterval(autoTimer);
+autoTimer = setInterval(fetchData, 5000);
+</script>
+</body>
+</html>
